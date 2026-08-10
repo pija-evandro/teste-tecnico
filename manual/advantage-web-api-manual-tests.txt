@@ -1,0 +1,120 @@
+Feature: Advantage Online Shopping - Product search
+
+  Background:
+    Given the Advantage Online Shopping home page is available
+
+  Scenario: Search for an existing product by exact name
+    When I search for an existing product by its full name
+    Then the results should contain the searched product
+    And each displayed result should be related to the search term
+
+  Scenario: Search for an existing product by partial name
+    When I search using a meaningful partial product name
+    Then the results should contain only products related to the partial term
+
+  Scenario: Search for a nonexistent product
+    When I search for a product name that does not exist
+    Then no unrelated product should be displayed
+    And the user should receive clear feedback that no matching product was found
+
+  Scenario: Search using leading and trailing spaces
+    When I search for an existing product with leading and trailing spaces
+    Then the application should handle the spaces without returning unrelated products
+
+
+Feature: Advantage Online Shopping - Shopping cart
+
+  Background:
+    Given an existing product is visible in the catalog
+
+  Scenario: Add one product to the cart
+    When I add the product to the cart
+    Then the cart counter should be updated
+    And the product should be displayed in the cart
+    And the product name, color, quantity and price should be displayed
+
+  Scenario: Add two different products to the cart
+    Given one product is already in the cart
+    When I add a different product to the cart
+    Then both products should be displayed in the cart
+    And the cart total should reflect both products
+
+  Scenario: Update product quantity in the cart
+    Given a product is in the cart
+    When I change its quantity to a valid value greater than one
+    Then the quantity should be updated
+    And the line total should be recalculated
+    And the cart total should be recalculated
+
+  Scenario: Remove a product from the cart
+    Given a product is in the cart
+    When I remove the product
+    Then the product should no longer be displayed in the cart
+    And the cart counter should be updated
+    And the cart total should be recalculated
+
+
+Feature: Advantage Online Shopping - Checkout review
+
+  Scenario: Validate one cart product on checkout
+    Given I added an available product to the cart
+    When I proceed to checkout
+    Then the checkout should display the same product selected in the cart
+    And the product name should match the cart
+    And the quantity should match the cart
+    And the price should match the cart
+    And the line total should match the cart
+
+  Scenario: Validate multiple products on checkout
+    Given I added multiple available products to the cart
+    When I proceed to checkout
+    Then every cart product should be displayed in the checkout review
+    And each quantity and price should match the cart
+    And the order total should match the cart total
+
+  Scenario: Prevent invalid checkout from an empty cart
+    Given the cart is empty
+    When I try to proceed to checkout
+    Then the application should not create an order with no products
+
+
+Feature: Advantage Online Shopping - Product search API
+
+  Background:
+    Given the catalog API is available
+
+  Scenario: Search API returns products related to the term
+    When I send a GET request to /catalog/api/v1/products/search with a valid product name
+    Then the HTTP status code should be 200
+    And the response should contain a product list
+    And every returned product should be related to the search term
+
+  Scenario: Search API returns a valid content type
+    When I send a valid product search request
+    Then the HTTP status code should be 200
+    And the response Content-Type should represent JSON
+
+  Scenario: Search API with a nonexistent product
+    When I send a search request for a nonexistent product name
+    Then the service should respond without a server error
+    And the response should not contain unrelated products
+
+  Scenario: Search API without the name parameter
+    When I send a request to the search endpoint without the name parameter
+    Then the service should respond deterministically according to its contract
+    And it should not return a server error
+
+  Scenario: Search API response keeps mandatory product data consistent
+    When I send a valid product search request
+    Then every returned product should have an identifier
+    And every returned product should have a product name
+    And every returned product should expose the data required by the catalog client
+
+
+Feature: Advantage Online Shopping - Web and API consistency
+
+  Scenario: Web search and API search return consistent product names
+    Given I choose a product search term supported by the catalog
+    When I search for that term through the web interface
+    And I search for the same term through the catalog API
+    Then the products displayed on the web should be represented consistently by the API results

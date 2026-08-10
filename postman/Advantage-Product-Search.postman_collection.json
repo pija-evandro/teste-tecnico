@@ -1,0 +1,79 @@
+{
+  "info": {
+    "_postman_id": "f340f6ad-9d59-4f8b-a2c5-qa-advantage-search",
+    "name": "Advantage Online Shopping - Product Search",
+    "description": "Collection criada para o cenário de pesquisa de produtos do teste técnico.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://www.advantageonlineshopping.com/catalog/api/v1"
+    },
+    {
+      "key": "productName",
+      "value": "HP"
+    }
+  ],
+  "item": [
+    {
+      "name": "Search products by name",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/products/search?name={{productName}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "products",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "name",
+              "value": "{{productName}}"
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is JSON', function () {",
+              "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+              "});",
+              "",
+              "const body = pm.response.json();",
+              "const groups = Array.isArray(body) ? body : body.products || [];",
+              "const products = groups.flatMap((item) => Array.isArray(item.products) ? item.products : item);",
+              "const term = pm.variables.get('productName').toLowerCase();",
+              "",
+              "pm.test('Search returns matching products', function () {",
+              "  pm.expect(products.length).to.be.above(0);",
+              "  products.forEach((product) => {",
+              "    pm.expect(product.productName).to.be.a('string');",
+              "    pm.expect(product.productName.toLowerCase()).to.include(term);",
+              "  });",
+              "});"
+            ],
+            "type": "text/javascript",
+            "packages": {}
+          }
+        }
+      ]
+    }
+  ]
+}

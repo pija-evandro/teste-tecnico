@@ -1,0 +1,19 @@
+{
+  "stepDefinitions": [
+    "cypress/e2e/step_definitions/**/*.js"
+  ],
+  "filterSpecs": true,
+  "omitFiltered": true,
+  "html": {
+    "enabled": true,
+    "output": "reports/cucumber-report.html"
+  },
+  "json": {
+    "enabled": true,
+    "output": "reports/cucumber-report.json"
+  },
+  "attachments": {
+    "addScreenshots": true,
+    "addVideos": false
+  }
+}
