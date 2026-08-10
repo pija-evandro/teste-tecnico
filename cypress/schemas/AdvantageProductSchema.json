@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Advantage Product",
+  "type": "object",
+  "required": [
+    "productId",
+    "productName",
+    "price"
+  ],
+  "properties": {
+    "productId": {
+      "type": "number"
+    },
+    "productName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "price": {
+      "type": "number"
+    }
+  },
+  "additionalProperties": true
+}

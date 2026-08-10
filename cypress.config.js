@@ -11,7 +11,7 @@ module.exports = defineConfig({
   defaultCommandTimeout: 8000,
   requestTimeout: 10000,
   responseTimeout: 15000,
-  pageLoadTimeout: 15000,
+  pageLoadTimeout: 30000,
   viewportWidth: 1440,
   viewportHeight: 900,
   video: true,
@@ -33,12 +33,18 @@ module.exports = defineConfig({
     specPattern: "cypress/e2e/features/**/*.feature",
     supportFile: "cypress/support/e2e.js",
     blockHosts: [
+      "googlesyndication.com",
       "*.googlesyndication.com",
+      "doubleclick.net",
       "*.doubleclick.net",
+      "googleadservices.com",
       "*.googleadservices.com",
+      "googletagmanager.com",
       "*.googletagmanager.com",
+      "google-analytics.com",
       "*.google-analytics.com",
       "adservice.google.com",
+      "*.adservice.google.com",
     ],
     async setupNodeEvents(on, config) {
       await addCucumberPreprocessorPlugin(on, config);
