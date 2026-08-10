@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "f340f6ad-9d59-4f8b-a2c5-qa-advantage-search",
     "name": "Advantage Online Shopping - Product Search",
-    "description": "Collection criada para o cenário de pesquisa de produtos do teste técnico.",
+    "description": "Advantage Online Shopping - Collection",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
