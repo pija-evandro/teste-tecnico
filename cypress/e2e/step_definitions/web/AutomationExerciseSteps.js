@@ -11,6 +11,17 @@ const cartPage = require("../../../pages/CartPage");
 const checkoutPage = require("../../../pages/CheckoutPage");
 const UserDataFactory = require("../../../factories/UserDataFactory");
 
+function createTemporaryCustomer() {
+  const user = UserDataFactory.create();
+
+  return cy
+    .createAutomationExerciseUser(user)
+    .then((createdUser) => {
+      return cy
+        .wrap(createdUser, { log: false })
+        .as("scenarioUser");
+    });
+}
 
 Before({ tags: "@usesTemporaryUser" }, () => {
   cy.wrap(null, { log: false }).as("scenarioUser");
@@ -52,11 +63,7 @@ After({ tags: "@usesTemporaryUser" }, () => {
 });
 
 Given("a temporary customer exists", () => {
-  const user = UserDataFactory.create();
-
-  cy.createAutomationExerciseUser(user).then((createdUser) => {
-    cy.wrap(createdUser, { log: false }).as("scenarioUser");
-  });
+  return createTemporaryCustomer();
 });
 
 Given("I am on the login page", () => {
@@ -144,12 +151,14 @@ Then("the selected product should no longer be displayed", () => {
 });
 
 Given("I am an authenticated customer", () => {
-  const user = UserDataFactory.create();
-
-  cy.createAutomationExerciseUser(user).then((createdUser) => {
-    cy.wrap(createdUser, { log: false }).as("scenarioUser");
+  return createTemporaryCustomer().then((createdUser) => {
     loginPage.visit();
-    loginPage.login(createdUser.email, createdUser.password);
+
+    loginPage.login(
+      createdUser.email,
+      createdUser.password,
+    );
+
     loginPage.assertLoggedIn(createdUser.name);
   });
 });
