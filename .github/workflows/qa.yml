@@ -6,7 +6,6 @@ on:
       - main
       - master
       - develop
-      - "feature/**"
   pull_request:
     branches:
       - main
@@ -44,44 +43,45 @@ jobs:
         id: automation-exercise
         shell: bash
         run: |
-          ui_status=$(curl \
-          --silent \
-          --show-error \
-          --location \
-          --max-redirs 5 \
-          --connect-timeout 10 \
-          --max-time 30 \
-          --output /tmp/automation-exercise-ui.html \
-          --write-out "%{http_code}" \
-          https://www.automationexercise.com/products || true)
+          ui_status=$(curl --silent --show-error --location --max-redirs 5 --connect-timeout 10 --max-time 30 --output /tmp/automation-exercise-ui.html --write-out "%{http_code}" https://www.automationexercise.com/products || true)
 
-          api_status=$(curl \
-            --silent \
-            --show-error \
-            --location \
-            --max-redirs 5 \
-            --connect-timeout 10 \
-            --max-time 30 \
-            --output /tmp/automation-exercise-api.json \
-            --write-out "%{http_code}" \
-            https://www.automationexercise.com/api/productsList || true)
+          api_status=$(curl --silent --show-error --location --max-redirs 5 --connect-timeout 10 --max-time 30 --output /tmp/automation-exercise-api.json --write-out "%{http_code}" https://www.automationexercise.com/api/productsList || true)
+
+          [ -n "$ui_status" ] || ui_status="000"
+          [ -n "$api_status" ] || api_status="000"
+
+          ui_valid=false
+          api_valid=false
+
+          if [ "$ui_status" = "200" ] && grep -qi "All Products" /tmp/automation-exercise-ui.html; then
+            ui_valid=true
+          fi
+
+          if [ "$api_status" = "200" ] && node -e 'const fs=require("fs"); try { const body=JSON.parse(fs.readFileSync("/tmp/automation-exercise-api.json","utf8")); process.exit(body && Array.isArray(body.products) ? 0 : 1); } catch { process.exit(1); }'; then
+            api_valid=true
+          fi
 
           echo "ui_status=$ui_status" >> "$GITHUB_OUTPUT"
           echo "api_status=$api_status" >> "$GITHUB_OUTPUT"
+          echo "ui_valid=$ui_valid" >> "$GITHUB_OUTPUT"
+          echo "api_valid=$api_valid" >> "$GITHUB_OUTPUT"
 
-          if [ "$ui_status" = "200" ] && [ "$api_status" = "200" ]; then
+          if [ "$ui_valid" = "true" ] && [ "$api_valid" = "true" ]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
+            echo "Automation Exercise is available."
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::Automation Exercise unavailable. UI: $ui_status | API: $api_status"
+            echo "::warning::Automation Exercise returned an invalid or blocked response."
+            echo "UI status: $ui_status | Valid content: $ui_valid"
+            echo "API status: $api_status | Valid JSON: $api_valid"
           fi
-      
+            
       - name: Run Web tests
         if: steps.automation-exercise.outputs.available == 'true'
         uses: cypress-io/github-action@v7
         with:
           install: false
-          command: npm run test:web
+          command: npm run test:web:ci
 
       - name: Report unavailable Web environment
         if: steps.automation-exercise.outputs.available != 'true'

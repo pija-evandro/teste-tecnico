@@ -10,6 +10,9 @@ const productsPage = require("../../../pages/ProductsPage");
 const cartPage = require("../../../pages/CartPage");
 const checkoutPage = require("../../../pages/CheckoutPage");
 const UserDataFactory = require("../../../factories/UserDataFactory");
+const advantageCatalogService = require(
+  "../../../services/AdvantageCatalogService",
+);
 
 function createTemporaryCustomer() {
   const user = UserDataFactory.create();
@@ -172,3 +175,100 @@ Then("the selected product should be displayed in the order review", () => {
     checkoutPage.assertReviewProduct(product);
   });
 });
+
+When(
+  "I search the Advantage catalog with an empty product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I search the Advantage catalog without a product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        query: {},
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I search the Advantage catalog using an unusual product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "<script>alert(1)</script>",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I request the Advantage catalog using an unsupported response format",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "HP",
+        headers: {
+          Accept: "application/xml",
+        },
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I invoke the Advantage catalog search using an unsupported operation",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "HP",
+        method: "POST",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+Then(
+  "the catalog service should not fail with a server error",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      expect(response.status).to.be.within(200, 499);
+    });
+  },
+);
+
+Then(
+  "the unsupported catalog operation should be rejected",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      expect(response.status).to.be.within(400, 499);
+    });
+  },
+);
