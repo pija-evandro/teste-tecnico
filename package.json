@@ -7,9 +7,10 @@
     "cy:open": "cypress open",
     "test": "cypress run",
     "test:web": "cypress run --spec \"cypress/e2e/features/web/**/*.feature\"",
-    "test:api": "cypress run --spec \"cypress/e2e/features/api/**/*.feature\"",
+    "test:api": "cypress run --spec \"cypress/e2e/features/api/**/*.feature\" --env \"tags=not @knownIssue\"",
     "test:smoke": "cypress run --env \"tags=@smoke\"",
     "test:regression": "cypress run --env \"tags=@regression\"",
+    "test:known-issues": "cypress run --spec \"cypress/e2e/features/api/**/*.feature\" --env \"tags=@knownIssue\"",
     "verify": "cypress verify"
   },
   "devDependencies": {

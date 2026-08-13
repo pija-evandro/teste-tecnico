@@ -18,3 +18,28 @@ Feature: Advantage product search API
     When I search the Advantage catalog for "HP"
     Then the Advantage response should be valid JSON
     And returned products should contain the required catalog fields
+
+@negative
+Scenario: Search with an empty product name
+  When I search the Advantage catalog with an empty product name
+  Then the catalog service should not fail with a server error
+
+@negative @knownIssue
+Scenario: Search without a product name
+  When I search the Advantage catalog without a product name
+  Then the catalog service should not fail with a server error
+
+@negative
+Scenario: Search with an unusual product name
+  When I search the Advantage catalog using an unusual product name
+  Then the catalog service should not fail with a server error
+
+@negative @knownIssue
+Scenario: Search requesting an unsupported response format
+  When I request the Advantage catalog using an unsupported response format
+  Then the catalog service should not fail with a server error
+
+@negative @knownIssue
+Scenario: Search using an unsupported operation
+  When I invoke the Advantage catalog search using an unsupported operation
+  Then the unsupported catalog operation should be rejected
