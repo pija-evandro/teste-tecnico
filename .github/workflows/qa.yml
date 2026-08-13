@@ -76,12 +76,12 @@ jobs:
             echo "API status: $api_status | Valid JSON: $api_valid"
           fi
             
-            - name: Run Web tests
-              if: steps.automation-exercise.outputs.available == 'true'
-              uses: cypress-io/github-action@v7
-              with:
-                install: false
-                command: npm run test:web
+      - name: Run Web tests
+        if: steps.automation-exercise.outputs.available == 'true'
+        uses: cypress-io/github-action@v7
+        with:
+          install: false
+          command: npm run test:web
 
       - name: Report unavailable Web environment
         if: steps.automation-exercise.outputs.available != 'true'
