@@ -272,3 +272,16 @@ Then(
     });
   },
 );
+
+Given("my cart is empty", () => {
+  cy.clearCookies();
+  cy.clearLocalStorage();
+});
+
+When("I open the cart", () => {
+  cartPage.visit();
+});
+
+Then("checkout should not be available", () => {
+  cartPage.assertCheckoutUnavailable();
+});

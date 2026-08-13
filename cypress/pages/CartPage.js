@@ -42,6 +42,14 @@ class CartPage {
     cy.contains("a", "Proceed To Checkout").click();
     cy.contains("h2", "Address Details").should("be.visible");
   }
+
+  visit() {
+    cy.visit("/view_cart");
+  }
+
+  assertCheckoutUnavailable() {
+    cy.contains("a", "Proceed To Checkout").should("not.exist");
+  }
 }
 
 module.exports = new CartPage();

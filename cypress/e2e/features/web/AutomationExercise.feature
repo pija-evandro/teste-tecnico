@@ -35,6 +35,12 @@ Feature: Shopping journey
     When I remove the selected product
     Then the selected product should no longer be displayed
 
+  @negative
+  Scenario: Prevent checkout with an empty cart
+    Given my cart is empty
+    When I open the cart
+    Then checkout should not be available
+
   @smoke @usesTemporaryUser
   Scenario: Validate a product at checkout
     Given I am an authenticated customer
