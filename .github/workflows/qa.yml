@@ -43,27 +43,9 @@ jobs:
         id: automation-exercise
         shell: bash
         run: |
-          ui_status=$(curl \
-          --silent \
-          --show-error \
-          --location \
-          --max-redirs 5 \
-          --connect-timeout 10 \
-          --max-time 30 \
-          --output /tmp/automation-exercise-ui.html \
-          --write-out "%{http_code}" \
-          https://www.automationexercise.com/products || true)
+          ui_status=$(curl --silent --show-error --location --max-redirs 5 --connect-timeout 10 --max-time 30 --output /tmp/automation-exercise-ui.html --write-out "%{http_code}" https://www.automationexercise.com/products || true)
 
-          api_status=$(curl \
-            --silent \
-            --show-error \
-            --location \
-            --max-redirs 5 \
-            --connect-timeout 10 \
-            --max-time 30 \
-            --output /tmp/automation-exercise-api.json \
-            --write-out "%{http_code}" \
-            https://www.automationexercise.com/api/productsList || true)
+          api_status=$(curl --silent --show-error --location --max-redirs 5 --connect-timeout 10 --max-time 30 --output /tmp/automation-exercise-api.json --write-out "%{http_code}" https://www.automationexercise.com/api/productsList || true)
 
           [ -n "$ui_status" ] || ui_status="000"
           [ -n "$api_status" ] || api_status="000"
@@ -71,33 +53,12 @@ jobs:
           ui_valid=false
           api_valid=false
 
-          if [ "$ui_status" = "200" ] && \
-              grep -qi "All Products" /tmp/automation-exercise-ui.html; then
+          if [ "$ui_status" = "200" ] && grep -qi "All Products" /tmp/automation-exercise-ui.html; then
             ui_valid=true
           fi
 
-          if [ "$api_status" = "200" ]; then
-            if node <<'NODE'
-          const fs = require("fs");
-
-          try {
-            const content = fs.readFileSync(
-            "/tmp/automation-exercise-api.json",
-            "utf8",
-            );
-
-            const body = JSON.parse(content);
-
-            if (body && Array.isArray(body.products)) {
-              process.exit(0);
-            }
-          } catch {}
-
-          process.exit(1);
-            NODE
-              then
-                api_valid=true
-            fi
+          if [ "$api_status" = "200" ] && node -e 'const fs=require("fs"); try { const body=JSON.parse(fs.readFileSync("/tmp/automation-exercise-api.json","utf8")); process.exit(body && Array.isArray(body.products) ? 0 : 1); } catch { process.exit(1); }'; then
+            api_valid=true
           fi
 
           echo "ui_status=$ui_status" >> "$GITHUB_OUTPUT"
@@ -114,13 +75,13 @@ jobs:
             echo "UI status: $ui_status | Valid content: $ui_valid"
             echo "API status: $api_status | Valid JSON: $api_valid"
           fi
-      
-      - name: Run Web tests
-        if: steps.automation-exercise.outputs.available == 'true'
-        uses: cypress-io/github-action@v7
-        with:
-          install: false
-          command: npm run test:web
+            
+            - name: Run Web tests
+              if: steps.automation-exercise.outputs.available == 'true'
+              uses: cypress-io/github-action@v7
+              with:
+                install: false
+                command: npm run test:web
 
       - name: Report unavailable Web environment
         if: steps.automation-exercise.outputs.available != 'true'
