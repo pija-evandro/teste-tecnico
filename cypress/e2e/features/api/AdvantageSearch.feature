@@ -18,6 +18,8 @@ Feature: Advantage product search API
     When I search the Advantage catalog for "HP"
     Then the Advantage response should be valid JSON
     And returned products should contain the required catalog fields
+    And the catalog response should follow the expected contract
+    And each product should belong to its returned category
 
 @negative
 Scenario: Search with an empty product name

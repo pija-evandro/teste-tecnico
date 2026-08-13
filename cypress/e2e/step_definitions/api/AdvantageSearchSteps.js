@@ -16,6 +16,10 @@ const productSchema = require(
   "../../../schemas/AdvantageProductSchema.json",
 );
 
+const searchResponseSchema = require(
+  "../../../schemas/AdvantageSearchResponseSchema.json",
+);
+
 const ajv = new Ajv({
   allErrors: true,
 });
@@ -112,6 +116,52 @@ Then(
           isValid,
           ajv.errorsText(validateProduct.errors),
         ).to.eq(true);
+      });
+    });
+  },
+);
+
+Then(
+  "the catalog response should follow the expected contract",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      const body =
+        typeof response.body === "string"
+          ? JSON.parse(response.body)
+          : response.body;
+
+      const ajv = new Ajv({
+        allErrors: true,
+        strict: false,
+      });
+
+      ajv.addSchema(productSchema);
+
+      const validate = ajv.compile(searchResponseSchema);
+
+      expect(
+        validate(body),
+        JSON.stringify(validate.errors, null, 2),
+      ).to.be.true;
+    });
+  },
+);
+
+Then(
+  "each product should belong to its returned category",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      const body =
+        typeof response.body === "string"
+          ? JSON.parse(response.body)
+          : response.body;
+
+      body.forEach((category) => {
+        category.products.forEach((product) => {
+          expect(product.categoryId).to.eq(
+            category.categoryId,
+          );
+        });
       });
     });
   },
