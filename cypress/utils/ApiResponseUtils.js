@@ -3,17 +3,29 @@ function parseApiBody(body) {
     return null;
   }
 
-  if (typeof body === "string") {
-    const normalizedBody = body.trim();
-
-    if (!normalizedBody) {
-      return null;
-    }
-
-    return JSON.parse(normalizedBody);
+  if (typeof body !== "string") {
+    return body;
   }
 
-  return body;
+  const normalizedBody = body.trim();
+
+  if (!normalizedBody) {
+    return null;
+  }
+
+  if (normalizedBody.startsWith("<")) {
+    throw new Error(
+      "Expected JSON response but received HTML from the external service",
+    );
+  }
+
+  try {
+    return JSON.parse(normalizedBody);
+  } catch {
+    throw new Error(
+      "Expected a valid JSON response from the external service",
+    );
+  }
 }
 
 function flattenProductCollections(items) {

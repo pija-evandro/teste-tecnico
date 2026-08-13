@@ -16,6 +16,33 @@ Before({ tags: "@usesTemporaryUser" }, () => {
   cy.wrap(null, { log: false }).as("scenarioUser");
 });
 
+Before(() => {
+  cy.intercept(
+    {
+      middleware: true,
+      url: /^https?:\/\/.*/,
+    },
+    (request) => {
+      const hostname = new URL(request.url).hostname;
+
+      const allowedHosts = [
+        "automationexercise.com",
+        "www.automationexercise.com",
+      ];
+
+      if (allowedHosts.includes(hostname)) {
+        request.continue();
+        return;
+      }
+
+      request.reply({
+        statusCode: 204,
+        body: "",
+      });
+    },
+  );
+});
+
 After({ tags: "@usesTemporaryUser" }, () => {
   cy.get("@scenarioUser").then((user) => {
     if (user) {
