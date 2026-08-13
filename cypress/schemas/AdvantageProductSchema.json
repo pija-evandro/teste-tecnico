@@ -1,22 +1,35 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "AdvantageProductSchema",
   "title": "Advantage Product",
   "type": "object",
   "required": [
     "productId",
+    "categoryId",
     "productName",
-    "price"
+    "price",
+    "imageUrl"
   ],
   "properties": {
     "productId": {
-      "type": "number"
+      "type": "integer",
+      "minimum": 1
+    },
+    "categoryId": {
+      "type": "integer",
+      "minimum": 1
     },
     "productName": {
       "type": "string",
       "minLength": 1
     },
     "price": {
-      "type": "number"
+      "type": "number",
+      "minimum": 0
+    },
+    "imageUrl": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "additionalProperties": true
