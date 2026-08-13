@@ -81,7 +81,7 @@ jobs:
         uses: cypress-io/github-action@v7
         with:
           install: false
-          command: npm run test:web
+          command: npm run test:web:ci
 
       - name: Report unavailable Web environment
         if: steps.automation-exercise.outputs.available != 'true'
