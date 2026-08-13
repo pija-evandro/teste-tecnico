@@ -4,6 +4,10 @@ const {
   Then,
 } = require("@badeball/cypress-cucumber-preprocessor");
 
+const advantageCatalogService = require(
+  "../../../services/AdvantageCatalogService",
+);
+
 const {
   getProductList,
 } = require("../../../utils/ApiResponseUtils");
@@ -19,27 +23,19 @@ const ajv = new Ajv({
 const validateProduct = ajv.compile(productSchema);
 
 When("I search the Advantage catalog for {string}", (term) => {
-  cy.request({
-    method: "GET",
-    url: `${Cypress.env(
-      "advantageCatalogApiUrl",
-    )}/products/search`,
-    qs: {
+  advantageCatalogService
+    .searchProducts({
       name: term,
-    },
-    failOnStatusCode: false,
-    headers: {
-      Accept: "application/json",
-    },
-  }).then((response) => {
-    cy.wrap(response, {
-      log: false,
-    }).as("advantageResponse");
+    })
+    .then((response) => {
+      cy.wrap(response, {
+        log: false,
+      }).as("advantageResponse");
 
-    cy.wrap(term, {
-      log: false,
-    }).as("advantageSearchTerm");
-  });
+      cy.wrap(term, {
+        log: false,
+      }).as("advantageSearchTerm");
+    });
 });
 
 Then("the search should return matching products", () => {
