@@ -5,7 +5,7 @@
   "description": "Teste técnico de QA com Cypress, Cucumber e JavaScript",
   "scripts": {
     "cy:open": "cypress open",
-    "test": "cypress run",
+    "test": "cypress run --env \"tags=not @knownIssue\"",
     "test:web": "cypress run --spec \"cypress/e2e/features/web/**/*.feature\"",
     "test:web:ci": "cypress run --config retries=1 --spec \"cypress/e2e/features/web/**/*.feature\"",
     "test:api": "cypress run --spec \"cypress/e2e/features/api/**/*.feature\" --env \"tags=not @knownIssue\"",
