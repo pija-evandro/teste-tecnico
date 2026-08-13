@@ -3,32 +3,20 @@ const {
   Then,
 } = require("@badeball/cypress-cucumber-preprocessor");
 
+const trelloService = require(
+  "../../../services/TrelloService",
+);
+
 When("I request the configured Trello action", () => {
-  const query = {};
-  const key = Cypress.env("trelloKey");
-  const token = Cypress.env("trelloToken");
-
-  if (key) {
-    query.key = key;
-  }
-
-  if (token) {
-    query.token = token;
-  }
-
-  cy.request({
-    method: "GET",
-    url: Cypress.env("trelloActionUrl"),
-    qs: query,
-    failOnStatusCode: false,
-    headers: {
-      Accept: "application/json",
-    },
-  }).then((response) => {
-    cy.wrap(response, { log: false }).as("trelloResponse");
+  trelloService.getAction().then((response) => {
+    cy.wrap(response, {
+      log: false,
+    }).as("trelloResponse");
 
     if (response.body?.data?.list?.name) {
-      cy.log(`Trello list name: ${response.body.data.list.name}`);
+      cy.log(
+        `Trello list name: ${response.body.data.list.name}`,
+      );
     }
   });
 });
