@@ -172,3 +172,16 @@ Then("the selected product should be displayed in the order review", () => {
     checkoutPage.assertReviewProduct(product);
   });
 });
+
+Given("my cart is empty", () => {
+  cy.clearCookies();
+  cy.clearLocalStorage();
+});
+
+When("I open the cart", () => {
+  cartPage.visit();
+});
+
+Then("checkout should not be available", () => {
+  cartPage.assertCheckoutUnavailable();
+});
