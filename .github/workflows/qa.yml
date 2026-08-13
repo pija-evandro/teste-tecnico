@@ -31,15 +31,69 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress
+      - name: Run API tests
         uses: cypress-io/github-action@v7
         with:
           install: false
-          command: npm test
+          command: npm run test:api
         env:
           CYPRESS_trelloKey: ${{ secrets.TRELLO_KEY }}
           CYPRESS_trelloToken: ${{ secrets.TRELLO_TOKEN }}
+        
+      - name: Check Automation Exercise availability
+        id: automation-exercise
+        shell: bash
+        run: |
+          ui_status=$(curl \
+          --silent \
+          --show-error \
+          --location \
+          --max-redirs 5 \
+          --connect-timeout 10 \
+          --max-time 30 \
+          --output /tmp/automation-exercise-ui.html \
+          --write-out "%{http_code}" \
+          https://www.automationexercise.com/products || true)
 
+          api_status=$(curl \
+            --silent \
+            --show-error \
+            --location \
+            --max-redirs 5 \
+            --connect-timeout 10 \
+            --max-time 30 \
+            --output /tmp/automation-exercise-api.json \
+            --write-out "%{http_code}" \
+            https://www.automationexercise.com/api/productsList || true)
+
+          echo "ui_status=$ui_status" >> "$GITHUB_OUTPUT"
+          echo "api_status=$api_status" >> "$GITHUB_OUTPUT"
+
+          if [ "$ui_status" = "200" ] && [ "$api_status" = "200" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Automation Exercise unavailable. UI: $ui_status | API: $api_status"
+          fi
+      
+      - name: Run Web tests
+        if: steps.automation-exercise.outputs.available == 'true'
+        uses: cypress-io/github-action@v7
+        with:
+          install: false
+          command: npm run test:web
+
+      - name: Report unavailable Web environment
+        if: steps.automation-exercise.outputs.available != 'true'
+        shell: bash
+        run: |
+          echo "### Web tests not executed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Automation Exercise was unavailable from the GitHub runner." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UI status: ${{ steps.automation-exercise.outputs.ui_status }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- API status: ${{ steps.automation-exercise.outputs.api_status }}" >> "$GITHUB_STEP_SUMMARY"
+          
       - name: Upload test artifacts
         if: always()
         uses: actions/upload-artifact@v7

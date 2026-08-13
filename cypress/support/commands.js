@@ -10,6 +10,20 @@ Cypress.Commands.add("createAutomationExerciseUser", (user) => {
       failOnStatusCode: false,
     })
     .then((response) => {
+      const responseBody =
+        typeof response.body === "string"
+          ? response.body.trim()
+          : response.body;
+
+      if (
+        typeof responseBody === "string" &&
+        responseBody.startsWith("<")
+      ) {
+        throw new Error(
+          `Automation Exercise account creation returned HTML instead of JSON (HTTP ${response.status})`,
+        );
+      }
+
       expect([200, 201]).to.include(response.status);
 
       const body = parseApiBody(response.body);
