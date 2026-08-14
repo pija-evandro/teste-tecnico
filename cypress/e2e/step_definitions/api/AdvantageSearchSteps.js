@@ -166,3 +166,101 @@ Then(
     });
   },
 );
+
+Then(
+  "the unsupported catalog operation should be rejected",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      expect(response.status).to.be.within(400, 499);
+    });
+  },
+);
+
+
+Then(
+  "the catalog service should not fail with a server error",
+  () => {
+    cy.get("@advantageResponse").then((response) => {
+      expect(response.status).to.be.within(200, 499);
+    });
+  },
+);
+
+When(
+  "I invoke the Advantage catalog search using an unsupported operation",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "HP",
+        method: "POST",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I search the Advantage catalog with an empty product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I search the Advantage catalog without a product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        query: {},
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I search the Advantage catalog using an unusual product name",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "<script>alert(1)</script>",
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
+
+When(
+  "I request the Advantage catalog using an unsupported response format",
+  () => {
+    return advantageCatalogService
+      .searchProducts({
+        name: "HP",
+        headers: {
+          Accept: "application/xml",
+        },
+      })
+      .then((response) => {
+        cy.wrap(response, { log: false }).as(
+          "advantageResponse",
+        );
+      });
+  },
+);
