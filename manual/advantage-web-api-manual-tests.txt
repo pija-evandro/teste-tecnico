@@ -1,120 +1,242 @@
 Feature: Advantage Online Shopping - Product search
 
   Background:
-    Given the Advantage Online Shopping home page is available
+    Given the product catalog is available to customers
 
   Scenario: Search for an existing product by exact name
-    When I search for an existing product by its full name
-    Then the results should contain the searched product
-    And each displayed result should be related to the search term
+    When a customer searches for an existing product by its full name
+    Then the searched product should be available in the results
+    And the results should be relevant to the search
 
   Scenario: Search for an existing product by partial name
-    When I search using a meaningful partial product name
-    Then the results should contain only products related to the partial term
+    When a customer searches using a meaningful part of a product name
+    Then the results should contain products related to that term
+
+  Scenario: Search with different letter casing
+    When a customer searches for an existing product using different letter casing
+    Then the expected products should still be found
 
   Scenario: Search for a nonexistent product
-    When I search for a product name that does not exist
-    Then no unrelated product should be displayed
-    And the user should receive clear feedback that no matching product was found
+    When a customer searches for a product that does not exist
+    Then unrelated products should not be presented
+    And the customer should understand that no matching product was found
 
-  Scenario: Search using leading and trailing spaces
-    When I search for an existing product with leading and trailing spaces
-    Then the application should handle the spaces without returning unrelated products
+  Scenario: Search with leading and trailing spaces
+    When a customer searches for an existing product with extra spaces
+    Then the search should still return relevant results
+
+  Scenario: Search using special characters
+    When a customer searches using only special characters
+    Then the search should be handled safely
+    And unrelated products should not be presented
 
 
 Feature: Advantage Online Shopping - Shopping cart
 
   Background:
-    Given an existing product is visible in the catalog
+    Given a customer has found an available product
 
   Scenario: Add one product to the cart
-    When I add the product to the cart
-    Then the cart counter should be updated
-    And the product should be displayed in the cart
-    And the product name, color, quantity and price should be displayed
+    When the customer adds the product to the cart
+    Then the cart should contain the selected product with the correct purchase information
 
   Scenario: Add two different products to the cart
     Given one product is already in the cart
-    When I add a different product to the cart
-    Then both products should be displayed in the cart
+    When the customer adds another product
+    Then both products should be represented correctly in the cart
     And the cart total should reflect both products
 
-  Scenario: Update product quantity in the cart
+  Scenario: Add the same product more than once
+    Given a product is already in the cart
+    When the customer adds the same product again with the same variation
+    Then the cart should represent the resulting quantity correctly
+    And the amount charged for the product should remain consistent
+
+  Scenario: Update product quantity
     Given a product is in the cart
-    When I change its quantity to a valid value greater than one
-    Then the quantity should be updated
-    And the line total should be recalculated
-    And the cart total should be recalculated
+    When the customer changes its quantity to another valid value
+    Then the cart should reflect the new quantity
+    And the amounts should be recalculated accordingly
 
   Scenario: Remove a product from the cart
     Given a product is in the cart
-    When I remove the product
-    Then the product should no longer be displayed in the cart
-    And the cart counter should be updated
-    And the cart total should be recalculated
+    When the customer removes that product
+    Then it should no longer be included in the purchase
+    And the cart totals should reflect the remaining items
+
+  Scenario: Preserve the cart while browsing
+    Given a customer has products in the cart
+    When the customer continues browsing the catalog
+    Then the previously selected products should remain in the cart
 
 
-Feature: Advantage Online Shopping - Checkout review
+Feature: Advantage Online Shopping - Checkout
 
-  Scenario: Validate one cart product on checkout
-    Given I added an available product to the cart
-    When I proceed to checkout
-    Then the checkout should display the same product selected in the cart
-    And the product name should match the cart
-    And the quantity should match the cart
-    And the price should match the cart
-    And the line total should match the cart
+  Scenario: Review a single product before completing the purchase
+    Given a customer has one product in the cart
+    When the customer proceeds to checkout
+    Then the checkout should preserve the product, variation, quantity and price selected in the cart
+    And the calculated amount should remain consistent
 
-  Scenario: Validate multiple products on checkout
-    Given I added multiple available products to the cart
-    When I proceed to checkout
-    Then every cart product should be displayed in the checkout review
-    And each quantity and price should match the cart
-    And the order total should match the cart total
+  Scenario: Review multiple products before completing the purchase
+    Given a customer has multiple products in the cart
+    When the customer proceeds to checkout
+    Then all selected products should be included in the order review
+    And their quantities, prices and total should remain consistent with the cart
 
-  Scenario: Prevent invalid checkout from an empty cart
-    Given the cart is empty
-    When I try to proceed to checkout
-    Then the application should not create an order with no products
+  Scenario: Prevent checkout with an empty cart
+    Given the customer has no products in the cart
+    When the customer attempts to continue with the purchase
+    Then an order without products should not be created
 
 
-Feature: Advantage Online Shopping - Product search API
+Feature: Advantage Online Shopping - Product search service
 
   Background:
-    Given the catalog API is available
+    Given the product catalog service is available
 
-  Scenario: Search API returns products related to the term
-    When I send a GET request to /catalog/api/v1/products/search with a valid product name
-    Then the HTTP status code should be 200
-    And the response should contain a product list
-    And every returned product should be related to the search term
+  Scenario: Search for products using a valid name
+    When a catalog client searches for an existing product
+    Then the request should be completed successfully
+    And the returned products should be relevant to the search
 
-  Scenario: Search API returns a valid content type
-    When I send a valid product search request
-    Then the HTTP status code should be 200
-    And the response Content-Type should represent JSON
+  Scenario: Return a usable catalog response
+    When a catalog client performs a valid product search
+    Then the response should be provided in the expected format
+    And the catalog information should be readable by the client
 
-  Scenario: Search API with a nonexistent product
-    When I send a search request for a nonexistent product name
-    Then the service should respond without a server error
-    And the response should not contain unrelated products
+  Scenario: Search for a nonexistent product
+    When a catalog client searches for a product that does not exist
+    Then the service should handle the search without an internal failure
+    And unrelated products should not be returned
 
-  Scenario: Search API without the name parameter
-    When I send a request to the search endpoint without the name parameter
-    Then the service should respond deterministically according to its contract
-    And it should not return a server error
+  Scenario: Search with an empty product name
+    When a catalog client searches with an empty product name
+    Then the service should handle the invalid search consistently
+    And an internal failure should not occur
 
-  Scenario: Search API response keeps mandatory product data consistent
-    When I send a valid product search request
-    Then every returned product should have an identifier
-    And every returned product should have a product name
-    And every returned product should expose the data required by the catalog client
+  Scenario: Search without providing a product name
+    When a catalog client searches without providing a product name
+    Then the invalid request should be handled consistently
+    And an internal failure should not occur
+
+  Scenario: Preserve mandatory catalog information
+    When a catalog client performs a valid product search
+    Then each returned product should contain the information required to identify and purchase it
+    And the returned category information should remain consistent with each product
+
+  Scenario: Search using special characters
+    When a catalog client searches using special characters
+    Then the input should be handled safely
+    And unrelated products should not be returned
+
+  Scenario: Search using an unusually long product name
+    When a catalog client submits an unusually long search term
+    Then the request should be handled without an internal failure
+    And any response returned should remain consistent with the catalog contract
 
 
-Feature: Advantage Online Shopping - Web and API consistency
+Feature: Advantage Online Shopping - Web and catalog consistency
 
-  Scenario: Web search and API search return consistent product names
-    Given I choose a product search term supported by the catalog
-    When I search for that term through the web interface
-    And I search for the same term through the catalog API
-    Then the products displayed on the web should be represented consistently by the API results
+  Scenario: Present the same products across Web and catalog service
+    Given a product can be found in the catalog
+    When the same product is searched through the store and through the catalog service
+    Then the product information should remain consistent between both channels
+
+  Scenario: Preserve product information throughout the shopping journey
+    Given a customer has found an existing product
+    When the product is added to the cart and taken to checkout
+    Then its relevant purchase information should remain consistent throughout the journey
+
+
+Feature: Advantage Online Shopping - Search boundaries
+
+  Scenario: Search using only numbers
+    When a customer searches using only numeric characters
+    Then the search should be handled safely
+    And unrelated products should not be presented
+
+  Scenario: Search using a very long term
+    When a customer submits an unusually long search term
+    Then the shopping experience should remain usable
+    And an application failure should not be exposed to the customer
+
+  Scenario: Repeat the same search
+    Given a customer has already searched for an existing product
+    When the same search is repeated
+    Then the results should remain functionally consistent
+
+  Scenario: Replace a previous search
+    Given a customer has searched for one product
+    When the customer searches for a different product
+    Then the results should correspond to the latest search
+
+
+Feature: Advantage Online Shopping - Cart boundaries
+
+  Scenario: Change product quantity to zero
+    Given a product is in the cart
+    When the customer attempts to change its quantity to zero
+    Then the cart should prevent an invalid purchasable quantity or remove the product
+    And the resulting total should remain correct
+
+  Scenario: Change product quantity to a negative value
+    Given a product is in the cart
+    When the customer attempts to use a negative quantity
+    Then the invalid quantity should not be accepted
+    And no invalid purchase amount should be produced
+
+  Scenario: Request an unusually large quantity
+    Given a product is in the cart
+    When the customer requests an unusually large quantity
+    Then applicable inventory or quantity limits should be respected
+    And the cart should not produce an invalid amount
+
+  Scenario: Preserve the selected product variation
+    Given a product offers different variations
+    When the customer chooses a variation and adds the product to the cart
+    Then the cart should preserve the selected variation
+
+
+Feature: Advantage Online Shopping - Checkout consistency
+
+  Scenario: Preserve product variation at checkout
+    Given a customer has selected a specific product variation
+    When the customer proceeds to checkout
+    Then the selected variation should remain unchanged
+
+  Scenario: Calculate the final order amount correctly
+    Given a customer has products in the cart
+    When the customer proceeds to checkout
+    Then the final amount should reflect the selected products and applicable charges
+
+  Scenario: Exclude a removed product from checkout
+    Given a customer has removed one of the products previously added to the cart
+    When the customer proceeds to checkout
+    Then the removed product should not be included in the order review
+
+
+Feature: Advantage Online Shopping - Catalog service robustness
+
+  Scenario: Avoid duplicate products in the same search result
+    When a catalog client performs a valid product search
+    Then the same product should not be returned more than once in the result set
+
+  Scenario: Keep repeated product searches consistent
+    When a catalog client repeats the same search without catalog changes
+    Then the returned information should remain functionally consistent
+
+  Scenario: Handle an unsupported catalog operation
+    When a catalog client attempts an operation that is not supported for product search
+    Then the request should be rejected safely
+    And an internal processing failure should not occur
+
+  Scenario: Handle an unsupported response format
+    When a catalog client requests a response format not supported by the service
+    Then the request should be handled according to the service contract
+    And an internal processing failure should not occur
+
+  Scenario: Treat script-like search content as data
+    When a catalog client searches using script-like content
+    Then the supplied value should be treated only as search data
+    And executable content or internal failure should not be exposed

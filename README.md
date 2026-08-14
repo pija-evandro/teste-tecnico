@@ -1,8 +1,8 @@
 # Teste Técnico - QA Automation
 
-Este projeto é minha solução para o teste técnico de QA, cobrindo os exercícios Web e API com Cypress, JavaScript e Cucumber.
+Este projeto é minha solução para o teste técnico de QA, cobrindo automação Web e API com Cypress, JavaScript e Cucumber.
 
-Além da automação, incluí os cenários manuais em Gherkin e uma collection do Postman para a busca de produtos do Advantage Online Shopping.
+Além da automação, incluí cenários manuais em Gherkin e uma collection do Postman para a API de busca de produtos do Advantage Online Shopping.
 
 ## Tecnologias
 
@@ -10,28 +10,31 @@ Além da automação, incluí os cenários manuais em Gherkin e uma collection d
 - Cypress
 - Cucumber
 - ESBuild
+- AJV
 - Postman
 - GitHub Actions
 
-## O que foi automatizado
+## Cobertura automatizada
 
 ### Web - Automation Exercise
 
-Usei o Automation Exercise para os cenários Web. O Automation Practice informado no enunciado é uma aplicação antiga e o próprio teste permite utilizar uma URL similar quando necessário.
+Usei o Automation Exercise para os cenários Web. O Automation Practice informado no enunciado é uma aplicação antiga e o exercício permite utilizar uma URL similar quando necessário.
 
-A cobertura automatizada inclui:
+A cobertura inclui:
 
 - Login válido com usuário temporário
-- Login inválido
+- Login com credenciais inválidas
 - Busca por produto existente
 - Busca sem resultado
 - Inclusão de produto no carrinho
+- Validação de nome, preço, quantidade e total no carrinho
 - Remoção de produto do carrinho
-- Validação do produto no checkout
+- Validação do produto e dos valores na revisão do checkout
+- Tentativa de checkout com carrinho vazio
 
-Os cenários são independentes. Cada teste monta os próprios pré-requisitos e não depende da execução de outro cenário.
+Os cenários são independentes e montam seus próprios pré-requisitos.
 
-Quando um fluxo precisa de autenticação, o usuário é criado pela API do Automation Exercise e removido no final do cenário.
+Nos fluxos que precisam de autenticação, a massa é gerada pela `UserDataFactory`. O usuário é criado pela API do Automation Exercise antes do cenário e removido ao final da execução.
 
 ### API - Trello
 
@@ -41,46 +44,91 @@ A automação executa:
 GET https://api.trello.com/1/actions/592f11060f95a3d3d46a987a
 ```
 
-São validados o status HTTP e o campo `data.list.name`. O valor da lista também é exibido no log da execução.
+São validados:
 
-Caso o endpoint exija autenticação, `trelloKey` e `trelloToken` podem ser informados por variáveis de ambiente.
+- Status HTTP
+- Campo `data.list.name`
+- Valor esperado da lista
+
+O nome da lista também é exibido durante a execução.
+
+Caso o endpoint exija autenticação, `trelloKey` e `trelloToken` podem ser informados por variáveis de ambiente e não ficam armazenados no projeto.
 
 ### API - Advantage Online Shopping
 
-A automação cobre o endpoint:
+A automação cobre:
 
 ```text
 GET /catalog/api/v1/products/search
 ```
 
-Os cenários verificam:
+A comunicação com a API fica centralizada em um Service Object, evitando chamadas HTTP espalhadas pelos steps.
 
-- Busca válida e aderência dos produtos ao termo pesquisado
+A cobertura inclui:
+
+- Busca válida por nome
 - Busca por produto inexistente
-- Status HTTP
-- Content-Type
-- Campos obrigatórios do produto
+- Parâmetro vazio
+- Parâmetro ausente
+- Entrada incomum
+- Variação de header `Accept`
+- Método não suportado
+- Status e formato da resposta
+- Validação de contrato com JSON Schema
+- Campos obrigatórios dos produtos
+- Consistência entre a categoria retornada e seus produtos
 
-A mesma busca também está disponível na collection do Postman.
+A validação de contrato utiliza AJV e considera tanto a estrutura das categorias quanto dos produtos.
+
+### Known issues
+
+Durante os testes negativos da API pública do Advantage foram identificadas situações em que o serviço retorna HTTP 500 para entradas inválidas:
+
+- Busca sem o parâmetro `name`
+- Solicitação com `Accept: application/xml`
+- Uso de `POST` no recurso de busca
+
+Esses cenários foram mantidos automatizados com a tag `@knownIssue`.
+
+Eles ficam fora da execução padrão para não transformar uma limitação conhecida do ambiente externo em bloqueio da suíte, mas podem ser reproduzidos separadamente.
+
+## Postman
+
+A collection:
+
+```text
+postman/Advantage-Product-Search.postman_collection.json
+```
+
+possui cenários positivos, negativos e known issues.
+
+Além das validações de status e conteúdo, a collection cobre:
+
+- Parâmetro normal, vazio e ausente
+- Header suportado e não suportado
+- Métodos HTTP
+- Busca sem resultado
+- JSON Schema
+- Consistência entre categoria e produtos
 
 ## Cenários manuais
 
-A pasta `manual` possui 17 cenários em Gherkin.
+O arquivo:
 
-Mantive os cenários que considerei mais relevantes para o exercício, cobrindo:
+```text
+manual/advantage-web-api-manual-tests.txt
+```
 
-- Busca
-- Carrinho
-- Checkout
-- API
-- Consistência entre Web e API
+contém os cenários manuais em Gherkin.
 
-A ideia foi ter uma cobertura ampla sem transformar o teste técnico em uma regressão completa do e-commerce.
+Eles foram escritos com foco em comportamento e resultado esperado, evitando transformar o Gherkin em uma sequência de ações de interface ou detalhes técnicos da API.
+
+A cobertura passa por busca, carrinho, checkout, serviço de catálogo, consistência entre canais e cenários de limite e robustez.
 
 ## Estrutura
 
 ```text
-Teste Tecnico/
+.
 ├── .github/
 │   └── workflows/
 │       └── qa.yml
@@ -105,6 +153,12 @@ Teste Tecnico/
 │   │   ├── CheckoutPage.js
 │   │   ├── LoginPage.js
 │   │   └── ProductsPage.js
+│   ├── schemas/
+│   │   ├── AdvantageProductSchema.json
+│   │   └── AdvantageSearchResponseSchema.json
+│   ├── services/
+│   │   ├── AdvantageCatalogService.js
+│   │   └── TrelloService.js
 │   ├── support/
 │   │   ├── commands.js
 │   │   └── e2e.js
@@ -118,6 +172,7 @@ Teste Tecnico/
 ├── .gitignore
 ├── cypress.config.js
 ├── package.json
+├── package-lock.json
 └── README.md
 ```
 
@@ -131,8 +186,10 @@ Teste Tecnico/
 Depois de clonar o repositório:
 
 ```bash
-npm install
+npm ci
 ```
+
+O projeto mantém o `package-lock.json` versionado para garantir uma instalação reproduzível localmente e no CI.
 
 Para validar o binário do Cypress:
 
@@ -142,7 +199,7 @@ npm run verify
 
 ## Execução
 
-Todos os testes:
+Suíte padrão:
 
 ```bash
 npm test
@@ -158,6 +215,12 @@ Somente API:
 
 ```bash
 npm run test:api
+```
+
+Known issues da API:
+
+```bash
+npm run test:known-issues
 ```
 
 Smoke:
@@ -194,41 +257,51 @@ Linux/macOS:
 CYPRESS_trelloKey="sua-chave" CYPRESS_trelloToken="seu-token" npm run test:api
 ```
 
-As credenciais não ficam armazenadas no projeto.
+As credenciais não ficam armazenadas no repositório.
+
+## Integração contínua
+
+A pipeline está configurada no GitHub Actions e é executada para Pull Requests direcionados à `master` e após alterações integradas na própria `master`.
+
+A instalação utiliza `npm ci`.
+
+Os testes de API são executados separadamente dos testes Web.
+
+Antes da execução Web, a pipeline verifica a disponibilidade do Automation Exercise. O preflight não considera apenas o status HTTP: também verifica se a página e a API pública retornaram conteúdo válido.
+
+Isso é necessário porque o ambiente externo pode responder HTTP 200 mesmo quando entrega uma página de bloqueio ou uma resposta diferente da esperada.
+
+Quando o ambiente Web está inválido para execução, os testes Web não são iniciados e o motivo é registrado no summary da pipeline.
+
+Falhas funcionais reais durante uma execução válida continuam causando falha na pipeline.
 
 ## Relatórios e evidências
 
-O Cucumber gera os relatórios em:
-
-```text
-reports/cucumber-report.html
-reports/cucumber-report.json
-```
-
-Em execução headless, o Cypress também grava vídeos em:
+Nas execuções headless, o Cypress pode gerar:
 
 ```text
 cypress/videos/
-```
-
-Screenshots de falha ficam em:
-
-```text
 cypress/screenshots/
 ```
 
-Essas pastas são ignoradas pelo Git e geradas somente durante a execução.
+Os screenshots são gerados em caso de falha.
 
-No GitHub Actions, reports, screenshots e vídeos são publicados como artefatos da execução.
+Os artefatos de execução configurados na pipeline são publicados pelo GitHub Actions para auxiliar na análise de falhas.
+
+Os arquivos gerados durante os testes não são versionados no repositório.
 
 ## Decisões do projeto
 
-Separei features, step definitions, Page Objects e massa de teste para deixar cada responsabilidade clara sem criar camadas que o tamanho do projeto não precisa.
+A estrutura foi separada entre features, step definitions, Page Objects, Service Objects, schemas e geração de massa para manter responsabilidades claras sem adicionar abstrações desnecessárias.
 
-Os arquivos de steps usam o sufixo `Steps`, as páginas usam o sufixo `Page` e a massa dinâmica fica centralizada em `UserDataFactory`.
+Os Page Objects concentram a interação e as validações relacionadas às páginas Web.
 
-Evitei `cy.wait()` com tempo fixo. Os testes aguardam elementos e estados da aplicação.
+Os Service Objects concentram a comunicação com APIs.
 
-Como o Automation Exercise carrega recursos externos de publicidade que podem prender o evento de carregamento da página, esses hosts são bloqueados no `cypress.config.js`. O `pageLoadTimeout` também foi mantido curto para uma indisponibilidade real falhar rápido.
+A `UserDataFactory` centraliza a geração da massa dinâmica utilizada pelos testes.
 
-Os ambientes utilizados são públicos e podem sofrer alterações ou indisponibilidades fora do controle do projeto.
+Os testes não dependem da ordem de execução e não utilizam `cy.wait()` com tempo fixo.
+
+Recursos externos que não fazem parte do fluxo testado, como publicidade e serviços de terceiros carregados pelo Automation Exercise, são bloqueados para reduzir interferência no carregamento das páginas.
+
+Como os ambientes utilizados no exercício são públicos, comportamentos externos e indisponibilidades são tratados separadamente de regressões do framework ou da aplicação sob teste.
